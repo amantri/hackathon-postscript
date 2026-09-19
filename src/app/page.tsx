@@ -1,68 +1,151 @@
-import Image from "next/image";
+import { Header } from "@/components/Header";
+import { getPatient, getConditions, getMedications, getVitals, SAMPLE_PATIENTS } from "@/lib/fhir";
+import { Section, CollapsibleSection, ActionItem, AppointmentCard } from "@/components/AvsComponents";
+import { LearnMoreButton } from "@/components/InteractiveWrappers";
+import { Link2 } from "lucide-react";
 
-export default function Home() {
+export default async function AVSPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const patientId = (params.patient as string) || SAMPLE_PATIENTS[0].id;
+  const patient = await getPatient(patientId);
+  const conditions = await getConditions(patientId);
+  const medications = await getMedications(patientId);
+  const vitals = await getVitals(patientId);
+
+  // Use the first condition as the primary diagnosis if available
+  const primaryCondition = conditions.length > 0 ? conditions[0] : null;
+  const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen flex flex-col pb-12">
+      <Header userName={patient?.name} />
+      
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 mt-6 space-y-6">
+        
+        {/* Title Section */}
+        <div className="mb-4">
+          <h1 className="text-2xl font-semibold text-gray-900">Office Visit - {todayStr}</h1>
+          <p className="text-sm text-gray-500 mt-1">with Dr. Gregory House at Apex Medicine</p>
+          {patient && (
+            <p className="text-xs text-gray-400 mt-1">Viewing Patient: {patient.name} (DOB: {patient.dob})</p>
+          )}
+        </div>
+
+        {/* Issue */}
+        <Section title="Issue">
+          <p className="text-sm text-gray-800">
+            Routine Follow-up and Medical Management
           </p>
+        </Section>
+
+        {/* Diagnosis and Results */}
+        <Section title="Diagnosis and Results">
+          {primaryCondition ? (
+            <>
+              <p className="text-sm font-semibold text-gray-900">{primaryCondition.name}</p>
+              <div className="mt-2 text-sm text-gray-600">
+                <p>Based on your recent lab results and clinical history.</p>
+              </div>
+              <div className="mt-4">
+                <LearnMoreButton topic={primaryCondition.name} />
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No primary diagnoses found on problem list.</p>
+          )}
+        </Section>
+
+        {/* Collapsibles */}
+        <div>
+          <CollapsibleSection title="Problem List">
+            {conditions.length > 0 ? (
+              <ul className="list-disc ml-5 space-y-1 text-sm text-gray-600">
+                {conditions.map(c => (
+                  <li key={c.id}>{c.name} {c.date ? `(Recorded: ${c.date})` : ""}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-600">No active problems listed.</p>
+            )}
+          </CollapsibleSection>
+          <CollapsibleSection title="Vitals and Biometrics">
+            {vitals.length > 0 ? (
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
+                {vitals.map(v => (
+                  <span key={v.id}><strong>{v.name}:</strong> {v.value}</span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">No recent vitals found.</p>
+            )}
+          </CollapsibleSection>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        {/* Next Steps */}
+        <div className="pt-2">
+          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">Next Steps</h2>
+          
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="w-4 h-4 text-gray-500" />
+              <h3 className="text-sm font-medium text-gray-900">Prescriptions</h3>
+            </div>
+            
+            {medications.length > 0 ? (
+              medications.map(med => (
+                <ActionItem 
+                  key={med.id}
+                  title={med.name} 
+                  subtitle={med.instructions} 
+                />
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 italic mb-4">No active prescriptions found.</p>
+            )}
+            
+            <div className="mt-3">
+              <a href="#" className="text-xs font-semibold text-gray-900 underline hover:text-primary transition-colors">
+                View all current medications →
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Recommendations</h3>
+            <ActionItem 
+              type="recommendation"
+              title="Schedule annual physical exam" 
+              checked={false}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <ActionItem 
+              type="recommendation"
+              title="Maintain healthy diet and regular exercise" 
+              checked={true}
+            />
+          </div>
         </div>
+
+        {/* What's Next */}
+        <div className="pt-4">
+          <h2 className="text-sm font-semibold text-gray-600 mb-3">What&apos;s Next</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AppointmentCard 
+              date={{ month: "Oct", day: "12", year: "2026" }}
+              title="Follow-up Appointment"
+              doctor="Gregory House, MD"
+            />
+            <AppointmentCard 
+              date={{ month: "Jan", day: "05", year: "2027" }}
+              title="Annual Checkup"
+              doctor="Lisa Cuddy, MD"
+            />
+          </div>
+        </div>
+
       </main>
     </div>
   );
