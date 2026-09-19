@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { DevBar } from "@/components/DevBar";
 import { Suspense } from "react";
+import { ChatProvider } from "@/components/ChatContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,7 +26,9 @@ export default function RootLayout({
       className={`${inter.variable} bg-gray-100 antialiased font-sans`}
     >
       <body className="min-h-screen flex flex-col text-gray-900">
-        {children}
+        <ChatProvider>
+          {children}
+        </ChatProvider>
         <Suspense fallback={null}>
           <DevBar />
         </Suspense>

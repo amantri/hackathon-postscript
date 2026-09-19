@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header";
-import { getPatient, getConditions, getMedications, getVitals, SAMPLE_PATIENTS } from "@/lib/fhir";
+import { getPatient, getConditions, getMedications, getVitals, getRecommendations, getAppointments, SAMPLE_PATIENTS } from "@/lib/fhir";
 import { Section, CollapsibleSection, ActionItem, AppointmentCard } from "@/components/AvsComponents";
 import { LearnMoreButton } from "@/components/InteractiveWrappers";
 import { Link2 } from "lucide-react";
@@ -15,6 +15,8 @@ export default async function AVSPage({
   const conditions = await getConditions(patientId);
   const medications = await getMedications(patientId);
   const vitals = await getVitals(patientId);
+  const recommendations = await getRecommendations(patientId);
+  const appointments = await getAppointments(patientId);
 
   // Use the first condition as the primary diagnosis if available
   const primaryCondition = conditions.length > 0 ? conditions[0] : null;
@@ -116,34 +118,38 @@ export default async function AVSPage({
 
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-3">Recommendations</h3>
-            <ActionItem 
-              type="recommendation"
-              title="Schedule annual physical exam" 
-              checked={false}
-            />
-            <ActionItem 
-              type="recommendation"
-              title="Maintain healthy diet and regular exercise" 
-              checked={true}
-            />
+            {recommendations.length > 0 ? (
+              recommendations.map(rec => (
+                <ActionItem 
+                  key={rec.id}
+                  type="recommendation"
+                  title={rec.title} 
+                  checked={rec.checked}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 italic mb-4">No recommendations at this time.</p>
+            )}
           </div>
         </div>
 
         {/* What's Next */}
         <div className="pt-4">
           <h2 className="text-sm font-semibold text-gray-600 mb-3">What&apos;s Next</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AppointmentCard 
-              date={{ month: "Oct", day: "12", year: "2026" }}
-              title="Follow-up Appointment"
-              doctor="Gregory House, MD"
-            />
-            <AppointmentCard 
-              date={{ month: "Jan", day: "05", year: "2027" }}
-              title="Annual Checkup"
-              doctor="Lisa Cuddy, MD"
-            />
-          </div>
+          {appointments.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {appointments.map(apt => (
+                <AppointmentCard 
+                  key={apt.id}
+                  date={apt.date}
+                  title={apt.title}
+                  doctor={apt.doctor}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No upcoming appointments scheduled.</p>
+          )}
         </div>
 
       </main>

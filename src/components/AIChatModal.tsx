@@ -7,11 +7,11 @@ import ReactMarkdown from "react-markdown";
 export function AIChatModal({ 
   isOpen, 
   onClose, 
-  initialPrompt 
+  promptTrigger 
 }: { 
   isOpen: boolean; 
   onClose: () => void;
-  initialPrompt?: string;
+  promptTrigger?: { prompt: string, timestamp: number };
 }) {
   const [messages, setMessages] = useState<{role: "user"|"ai", content: string}[]>([]);
   const [input, setInput] = useState("");
@@ -51,10 +51,14 @@ export function AIChatModal({
     }
   }, [isOpen]);
 
-  // Initialize with prompt if empty
-  if (isOpen && initialPrompt && messages.length === 0 && !isLoading) {
-    handleSend(initialPrompt);
-  }
+  const lastProcessedTimestampRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (isOpen && promptTrigger && promptTrigger.timestamp > lastProcessedTimestampRef.current && !isLoading) {
+      lastProcessedTimestampRef.current = promptTrigger.timestamp;
+      handleSend(promptTrigger.prompt);
+    }
+  }, [isOpen, promptTrigger, isLoading]);
 
   async function handleSend(text: string = input) {
     if (!text.trim()) return;
