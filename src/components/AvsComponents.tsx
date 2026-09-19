@@ -8,7 +8,7 @@ export function Section({ title, children }: { title: string; children: React.Re
   return (
     <section className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
       <div className="px-4 py-3 bg-gray-50/50 border-b border-gray-100">
-        <h2 className="text-sm font-medium text-gray-700">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       </div>
       <div className="p-4">
         {children}
@@ -26,7 +26,7 @@ export function CollapsibleSection({ title, children }: { title: string; childre
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50/50 transition-colors"
       >
-        <h2 className="text-sm font-medium text-gray-700">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
         {isOpen ? <ChevronDown className="w-5 h-5 text-gray-400" /> : <ChevronRight className="w-5 h-5 text-gray-400" />}
       </button>
       {isOpen && (

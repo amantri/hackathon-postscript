@@ -2,7 +2,18 @@ import { Header } from "@/components/Header";
 import { getPatient, getConditions, getMedications, getVitals, getRecommendations, getAppointments, SAMPLE_PATIENTS } from "@/lib/fhir";
 import { Section, CollapsibleSection, ActionItem, AppointmentCard } from "@/components/AvsComponents";
 import { LearnMoreButton } from "@/components/InteractiveWrappers";
-import { Link2 } from "lucide-react";
+import { Pill, Activity, Thermometer, HeartPulse, Droplets, Scale, Stethoscope, Gauge } from "lucide-react";
+
+function getVitalIcon(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes('blood pressure')) return <Gauge className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+  if (lower.includes('heart rate') || lower.includes('pulse')) return <HeartPulse className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+  if (lower.includes('oxygen')) return <Droplets className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+  if (lower.includes('temp')) return <Thermometer className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+  if (lower.includes('weight') || lower.includes('bmi')) return <Scale className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+  if (lower.includes('hba1c') || lower.includes('blood')) return <Activity className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+  return <Stethoscope className="w-8 h-8 text-gray-800" strokeWidth={1.5} />;
+}
 
 export default async function AVSPage({
   searchParams,
@@ -74,11 +85,19 @@ export default async function AVSPage({
               <p className="text-sm text-gray-600">No active problems listed.</p>
             )}
           </CollapsibleSection>
-          <CollapsibleSection title="Vitals and Biometrics">
+          <CollapsibleSection title="Vitals">
             {vitals.length > 0 ? (
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
+              <div className="grid grid-cols-2 gap-y-6 gap-x-4 py-2">
                 {vitals.map(v => (
-                  <span key={v.id}><strong>{v.name}:</strong> {v.value}</span>
+                  <div key={v.id} className="flex items-start gap-3">
+                    <div className="mt-1 shrink-0">
+                      {getVitalIcon(v.name)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-500 leading-tight">{v.name}</span>
+                      <span className="text-base font-medium text-gray-900 mt-0.5">{v.value}</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -93,7 +112,7 @@ export default async function AVSPage({
           
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
-              <Link2 className="w-4 h-4 text-gray-500" />
+              <Pill className="w-4 h-4 text-gray-500" />
               <h3 className="text-sm font-medium text-gray-900">Prescriptions</h3>
             </div>
             
