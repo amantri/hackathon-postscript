@@ -1,144 +1,95 @@
-export interface Patient {
-  id: string;
-  name: string;
-  dob: string;
-  gender: string;
+import { falkor } from "./falkordb";
+import { Patient, Condition, Medication, VitalSign, Recommendation, Appointment } from "./fhir-types";
+import { SAMPLE_PATIENTS } from "./fhir-mock-data";
+
+export { SAMPLE_PATIENTS };
+export type { Patient, Condition, Medication, VitalSign, Recommendation, Appointment };
+
+// Helper to get graph
+async function getGraph() {
+  const db = await falkor;
+  return db.selectGraph('avs_graph');
 }
-
-export interface Condition {
-  id: string;
-  name: string;
-  date?: string;
-}
-
-export interface Medication {
-  id: string;
-  name: string;
-  instructions: string;
-}
-
-export interface VitalSign {
-  id: string;
-  name: string;
-  value: string;
-}
-
-export interface Recommendation {
-  id: string;
-  title: string;
-  checked: boolean;
-}
-
-export interface Appointment {
-  id: string;
-  date: { month: string; day: string; year: string; };
-  title: string;
-  doctor: string;
-}
-
-export const SAMPLE_PATIENTS = [
-  { id: "erXuFYUfucBZaryVksYEcMg3", name: "Camila Lopez", dob: "1980-05-15", gender: "female" },
-  { id: "eq081-VQEgP8drUUqCWzHfw3", name: "Derrick Lin", dob: "1973-11-20", gender: "male" },
-  { id: "eJ3Wn04gXqEayl4O26N-wEQ3", name: "Jessica Smith", dob: "1992-02-08", gender: "female" },
-];
-
-const FHIR_BASE = "/api/fhir";
 
 export async function getPatient(patientId: string): Promise<Patient | null> {
-  const map: Record<string, Patient> = {
-    "erXuFYUfucBZaryVksYEcMg3": { id: "erXuFYUfucBZaryVksYEcMg3", name: "Camila Lopez", dob: "1980-05-15", gender: "female" },
-    "eq081-VQEgP8drUUqCWzHfw3": { id: "eq081-VQEgP8drUUqCWzHfw3", name: "Derrick Lin", dob: "1973-11-20", gender: "male" },
-    "eJ3Wn04gXqEayl4O26N-wEQ3": { id: "eJ3Wn04gXqEayl4O26N-wEQ3", name: "Jessica Smith", dob: "1992-02-08", gender: "female" },
-  };
-  return map[patientId] || null;
+  const graph = await getGraph();
+  const res = await graph.query(`MATCH (p:Patient {id: $id}) RETURN p`, { params: { id: patientId } });
+  if (!res.data || res.data.length === 0) return null;
+  const props = (res.data[0] as any).p.properties;
+  return { id: props.id, name: props.name, dob: props.dob, gender: props.gender };
 }
 
 export async function getConditions(patientId: string): Promise<Condition[]> {
-  const map: Record<string, Condition[]> = {
-    "erXuFYUfucBZaryVksYEcMg3": [
-      { id: "c1", name: "Mild to moderate Chronic Obstructive Pulmonary Disease (COPD)", date: "2025-10-12" },
-      { id: "c2", name: "Essential hypertension", date: "2023-04-05" }
-    ],
-    "eq081-VQEgP8drUUqCWzHfw3": [
-      { id: "c3", name: "Type 2 diabetes mellitus", date: "2024-01-20" },
-      { id: "c4", name: "Hyperlipidemia", date: "2024-01-20" }
-    ],
-    "eJ3Wn04gXqEayl4O26N-wEQ3": [
-      { id: "c5", name: "Acute bronchitis", date: "2026-05-10" }
-    ]
-  };
-  return map[patientId] || [];
+  const graph = await getGraph();
+  const res = await graph.query(
+    `MATCH (p:Patient {id: $id})-[:HAS_CONDITION]->(c:Condition) RETURN c`,
+    { params: { id: patientId } }
+  );
+  if (!res.data) return [];
+  return res.data.map((row: any) => ({
+    id: row.c.properties.id,
+    name: row.c.properties.name,
+    date: row.c.properties.date
+  }));
 }
 
 export async function getMedications(patientId: string): Promise<Medication[]> {
-  const map: Record<string, Medication[]> = {
-    "erXuFYUfucBZaryVksYEcMg3": [
-      { id: "m1", name: "Trelegy Ellipta (fluticasone/umeclidinium/vilanterol) Inhaler", instructions: "Inhale once daily" },
-      { id: "m2", name: "Salbutamol Inhaler", instructions: "Use as needed for quick relief for shortness of breath" }
-    ],
-    "eq081-VQEgP8drUUqCWzHfw3": [
-      { id: "m3", name: "Metformin 500mg", instructions: "Take 1 tablet by mouth twice a day with meals" },
-      { id: "m4", name: "Atorvastatin 20mg", instructions: "Take 1 tablet by mouth daily at bedtime" }
-    ],
-    "eJ3Wn04gXqEayl4O26N-wEQ3": [
-      { id: "m5", name: "Amoxicillin 500mg", instructions: "Take 1 capsule by mouth 3 times a day for 7 days" }
-    ]
-  };
-  return map[patientId] || [];
+  const graph = await getGraph();
+  const res = await graph.query(
+    `MATCH (p:Patient {id: $id})-[:IS_PRESCRIBED]->(m:Medication) RETURN m`,
+    { params: { id: patientId } }
+  );
+  if (!res.data) return [];
+  return res.data.map((row: any) => ({
+    id: row.m.properties.id,
+    name: row.m.properties.name,
+    instructions: row.m.properties.instructions
+  }));
 }
 
 export async function getVitals(patientId: string): Promise<VitalSign[]> {
-  const map: Record<string, VitalSign[]> = {
-    "erXuFYUfucBZaryVksYEcMg3": [
-      { id: "v1", name: "Blood Pressure", value: "128 / 82 mmHg" },
-      { id: "v2", name: "Heart Rate", value: "72 bpm" },
-      { id: "v3", name: "Oxygen Saturation", value: "94 %" }
-    ],
-    "eq081-VQEgP8drUUqCWzHfw3": [
-      { id: "v4", name: "Blood Pressure", value: "140 / 90 mmHg" },
-      { id: "v5", name: "Heart Rate", value: "85 bpm" },
-      { id: "v6", name: "HbA1c", value: "7.4 %" }
-    ],
-    "eJ3Wn04gXqEayl4O26N-wEQ3": [
-      { id: "v7", name: "Temperature", value: "99.2 °F" },
-      { id: "v8", name: "Heart Rate", value: "90 bpm" }
-    ]
-  };
-  return map[patientId] || [];
+  const graph = await getGraph();
+  const res = await graph.query(
+    `MATCH (p:Patient {id: $id})-[:HAS_VITAL_RECORD]->(v:VitalSign) RETURN v`,
+    { params: { id: patientId } }
+  );
+  if (!res.data) return [];
+  return res.data.map((row: any) => ({
+    id: row.v.properties.id,
+    name: row.v.properties.name,
+    value: row.v.properties.value
+  }));
 }
 
 export async function getRecommendations(patientId: string): Promise<Recommendation[]> {
-  const map: Record<string, Recommendation[]> = {
-    "erXuFYUfucBZaryVksYEcMg3": [
-      { id: "r1", title: "Schedule follow-up pulmonary function test", checked: false },
-      { id: "r2", title: "Continue smoking cessation program", checked: true }
-    ],
-    "eq081-VQEgP8drUUqCWzHfw3": [
-      { id: "r3", title: "Schedule diabetic eye exam", checked: false },
-      { id: "r4", title: "Monitor blood sugar daily", checked: true },
-      { id: "r5", title: "Maintain healthy diet and regular exercise", checked: true }
-    ],
-    "eJ3Wn04gXqEayl4O26N-wEQ3": [
-      { id: "r6", title: "Rest and drink plenty of fluids", checked: true },
-      { id: "r7", title: "Return if symptoms worsen", checked: false }
-    ]
-  };
-  return map[patientId] || [];
+  const graph = await getGraph();
+  const res = await graph.query(
+    `MATCH (p:Patient {id: $id})-[:HAS_RECOMMENDATION]->(r:Recommendation) RETURN r`,
+    { params: { id: patientId } }
+  );
+  if (!res.data) return [];
+  return res.data.map((row: any) => ({
+    id: row.r.properties.id,
+    title: row.r.properties.title,
+    checked: row.r.properties.checked
+  }));
 }
 
 export async function getAppointments(patientId: string): Promise<Appointment[]> {
-  const map: Record<string, Appointment[]> = {
-    "erXuFYUfucBZaryVksYEcMg3": [
-      { id: "a1", date: { month: "Oct", day: "12", year: "2026" }, title: "Follow-up Appointment", doctor: "Gregory House, MD" },
-      { id: "a2", date: { month: "Jan", day: "05", year: "2027" }, title: "Pulmonology Consult", doctor: "James Wilson, MD" }
-    ],
-    "eq081-VQEgP8drUUqCWzHfw3": [
-      { id: "a3", date: { month: "Nov", day: "20", year: "2026" }, title: "Endocrinology Follow-up", doctor: "Lisa Cuddy, MD" },
-      { id: "a4", date: { month: "Dec", day: "15", year: "2026" }, title: "Annual Physical Exam", doctor: "Gregory House, MD" }
-    ],
-    "eJ3Wn04gXqEayl4O26N-wEQ3": [
-      { id: "a5", date: { month: "Sep", day: "25", year: "2026" }, title: "Telehealth Check-in", doctor: "Allison Cameron, MD" }
-    ]
-  };
-  return map[patientId] || [];
+  const graph = await getGraph();
+  const res = await graph.query(
+    `MATCH (p:Patient {id: $id})-[:HAS_APPOINTMENT]->(a:Appointment) RETURN a`,
+    { params: { id: patientId } }
+  );
+  if (!res.data) return [];
+  return res.data.map((row: any) => ({
+    id: row.a.properties.id,
+    title: row.a.properties.title,
+    doctor: row.a.properties.doctor,
+    date: {
+      month: row.a.properties.date_month,
+      day: row.a.properties.date_day,
+      year: row.a.properties.date_year
+    }
+  }));
 }

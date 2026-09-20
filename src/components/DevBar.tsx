@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SAMPLE_PATIENTS } from "@/lib/fhir";
+import { SAMPLE_PATIENTS } from "@/lib/fhir-mock-data";
 import { Settings2, GripVertical } from "lucide-react";
 import { useState, useRef } from "react";
 
