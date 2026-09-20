@@ -1,6 +1,6 @@
 # Postscript
 
-An interactive, AI-powered After Visit Summary (AVS) application designed to help patients better understand their health data. Inspired by patient portals like Epic MyChart, Postscript takes the complex medical jargon from a doctor's visit and makes it accessible, clear, and actionable.
+An interactive, After Visit Summary (AVS) application with AI features designed to help patients better understand their health data. Inspired by patient portals like Epic MyChart, Postscript takes the complex medical data from a doctor's visit and presents it in a clear, actionable way.
 
 ## Features
 
