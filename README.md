@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Postscript
+
+An interactive, AI-powered After Visit Summary (AVS) application designed to help patients better understand their health data. Inspired by patient portals like Epic MyChart, Postscript takes the complex medical jargon from a doctor's visit and makes it accessible, clear, and actionable.
+
+## Features
+
+- **Interactive AVS Dashboard:** View your diagnoses, medications, vital signs, and upcoming appointments in a clean, easy-to-read interface.
+- **AI Chat Assistant:** Ask questions about your health data. Powered by Google Gemini, the assistant provides answers in simple layman's terms.
+- **Grounded Medical Advice:** The AI is instructed to base its answers on trusted medical sources to reduce hallucinations and ensure reliability.
+- **Graph Database Integration:** Logs chat interactions and relationships in FalkorDB for advanced analytics and relationship mapping.
+- **FHIR Compatible Data Structure:** Uses mock data structured similarly to Fast Healthcare Interoperability Resources (FHIR) standards.
+
+## Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org/) (App Router)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **AI Integration:** [Google GenAI SDK](https://github.com/google/gemini-ai-node) (Gemini 3.6 Flash)
+- **Database:** [FalkorDB](https://falkordb.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js (v18+)
+- A Google Gemini API Key
+- A FalkorDB instance (local or cloud)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd postscript2
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
 
-## Learn More
+3. Set up environment variables:
+   Create a `.env.local` file in the root directory and add the following:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   FALKORDB_URL=redis://localhost:6379 # Or your FalkorDB connection string
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+- `src/app`: Next.js pages and API routes.
+- `src/components`: Reusable UI components (Dashboard widgets, AI Chat Modal, etc.).
+- `src/lib`: Utility functions, database connection (`falkordb.ts`), and FHIR mock data.
+- `src/config`: Configuration files, including the list of trusted medical sources for the AI.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
